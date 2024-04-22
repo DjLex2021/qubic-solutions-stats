@@ -8,7 +8,7 @@
 $walletId = "";
 
 // TelegramBot
-$sendTelegramMessage = false;
+$sendTelegramMessage = true;
 $telegramUserName = "";
 $telegramBotToken = "";
 
@@ -25,6 +25,14 @@ if(isset($_GET["delete"])) {
     echo "<meta http-equiv=\"refresh\" content=\"0; URL=stat.php?show=1\">";
 }
 
+if(isset($_GET["resetMessageId"])) {
+    $stat = json_decode(file_get_contents($statFile), true);
+    $stat["telegramMessageId"] = "";
+    file_put_contents($statFile, json_encode($stat));
+
+    echo "<meta http-equiv=\"refresh\" content=\"0; URL=stat.php?show=1\">";
+}
+
 
 /*
  * Extreme simplified Telegram sendMessage function
@@ -33,20 +41,22 @@ if(isset($_GET["delete"])) {
  * After '/start' you have to send at least one message from the bot chat,
  * to get getUpdates function response with your current message id
  */
-function sendTelegramMessage($message) {
-    global $telegramUserName, $telegramBotToken;
-    $sendMessageAPI = "https://api.telegram.org/bot".$telegramBotToken."/sendMessage";
+function getTelegramMessageId($telegramUserName, $telegramBotToken) {
     $getUpdatesAPI = "https://api.telegram.org/bot".$telegramBotToken."/getUpdates";
 
-    $chatID = "";
     $updateResponse = file_get_contents($getUpdatesAPI);
     $updateData = json_decode($updateResponse, true);
     foreach($updateData["result"] AS $chat) {
         if($chat["message"]["from"]["username"] == $telegramUserName) {
-            $chatID = $chat["message"]["chat"]["id"];
-            break;
+            return $chat["message"]["chat"]["id"];
         }
     }
+}
+
+function sendTelegramMessage($message, $telegramBotToken = "", $chatID = "") {
+    if($telegramBotToken == "" || $chatID == "") { return false; }
+
+    $sendMessageAPI = "https://api.telegram.org/bot".$telegramBotToken."/sendMessage";
 
     if($chatID != "") {
         $data = [
@@ -63,7 +73,7 @@ function sendTelegramMessage($message) {
         ];
 
         $context = stream_context_create($options);
-        $result = file_get_contents($sendMessageAPI, false, $context);
+        return file_get_contents($sendMessageAPI, false, $context);
     }
 }
 
@@ -104,10 +114,15 @@ if($stat == "") {
         "iterrate"              => "",
         "deviceCount"           => "",
         "solutions"             => "",
+        "telegramMessageId"     => "",
         "devices"               => [],
         "oldSolutions"          => [],
         "epochHistoryDevices"   => []
     ];
+}
+
+if($stat["telegramMessageId"] == "") {
+    $stat["telegramMessageId"] = getTelegramMessageId($telegramUserName, $telegramBotToken);
 }
 
 if(time()-25 > strtotime($stat["date"])) {
@@ -144,7 +159,9 @@ if(is_array($result)) {
             $msg .= $device.": ".$sols."\n";
         }
 
-        if($sendTelegramMessage) { sendTelegramMessage($msg); }
+        if($sendTelegramMessage) {
+            sendTelegramMessage($msg, $telegramBotToken, $stat["telegramMessageId"]);
+        }
         $stat["epochHistory"][$result["epoch"]][date("Y-m-d")]++;
     }
 
@@ -181,31 +198,36 @@ if(is_array($result)) {
 if($_GET["show"] == 1) {
     if(is_array($stat)) {
         $o = '<div class="list-group" style="width: 360px; margin-left: 12px; margin-top: 20px;">
-                <a class="list-group-item" style="cursor: unset;">
-                    <i class="fa fa-comment fa-fw"></i> Time
+                <div class="list-group-item" style="cursor: unset;">
+                    Time
                     <span class="pull-right text-muted small"><em>'.$stat["date"].'</em>
                     </span>
-                </a>
-                <a class="list-group-item" style="cursor: unset;">
-                    <i class="fa fa-comment fa-fw"></i> Epoch
+                </div>
+                <div class="list-group-item" style="cursor: unset;">
+                    Telegram-Bot
+                    <span class="pull-right text-muted small"><em>'.($sendTelegramMessage ? "active (".$stat["telegramMessageId"].")" : "inactive").' <a href="stat.php?resetMessageId=1" style="font-family: Lucida Sans Unicode">&#x21bb;</a></em>
+                    </span>
+                </div>
+                <div class="list-group-item" style="cursor: unset;">
+                    Epoch
                     <span class="pull-right text-muted small"><em>'.$stat["epoch"].'</em>
                     </span>
-                </a>
-                <a class="list-group-item" style="cursor: unset;">
-                    <i class="fa fa-twitter fa-fw"></i> Iterrate total
+                </div>
+                <div class="list-group-item" style="cursor: unset;">
+                    Iterrate total
                     <span class="pull-right text-muted small"><em>'.$stat["iterrate"].'</em>
                     </span>
-                </a>
-                <a class="list-group-item" style="cursor: unset;">
-                    <i class="fa fa-envelope fa-fw"></i> Devices
+                </div>
+                <div class="list-group-item" style="cursor: unset;">
+                    Devices
                     <span class="pull-right text-muted small"><em>'.$stat["deviceCount"].'</em>
                     </span>
-                </a>
-                <a class="list-group-item" style="cursor: unset;">
-                    <i class="fa fa-tasks fa-fw"></i> Solutions
+                </div>
+                <div class="list-group-item" style="cursor: unset;">
+                    Solutions
                     <span class="pull-right text-muted small"><em>'.$stat["solutions"].'</em>
                     </span>
-                </a>
+                </div>
             </div>';
 
         $o .= '<div class="table-responsive" style="width: 360px; margin-left: 12px;">
@@ -225,7 +247,13 @@ if($_GET["show"] == 1) {
         array_sort_by_column($stat["devices"], "iterrate", SORT_DESC);
         foreach($stat["devices"] AS $devId => $dev) {
             $rowColor = $dev["last_seen"] != $stat["date"] ? "orange" : "";
-            $devId = $dev["last_seen"] != $stat["date"] ? "<a href=\"stat.php?delete=$devId\">(-)</a> ".$devId : $devId;
+            $devId = $dev["last_seen"] != $stat["date"] ? "
+                <a href=\"stat.php?delete=$devId\">
+                    <svg width=\"16\" height=\"16\" fill=\"currentColor\">
+                      <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>
+                      <path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>
+                    </svg>
+                </a> ".$devId : $devId;
 
             $o .= '     <tr style="background-color: '.$rowColor.';">
                             <td style="text-align: right;">'.$i.'</td>
