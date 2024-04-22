@@ -154,7 +154,7 @@ if(is_array($result)) {
             }
         }
 
-        $msg = "Solution found by $foundBy!\n\nTotal: ".$result["solutions"]."\n\nPreviously found:\n";
+        $msg = "<b><u>Solution found by:</u></b>\n$foundBy!\n\n<b><u>Total:</u></b>\n".$result["solutions"]."\n\n<b><u>Previously found:</u></b>\n";
         if(!is_array($stat["epochHistoryDevices"][$stat["epoch"]]) || count($stat["epochHistoryDevices"][$stat["epoch"]]) == 0) { $msg .= "none"; }
         foreach($stat["epochHistoryDevices"][$stat["epoch"]] AS $device => $sols) {
             $msg .= $device.": ".$sols."\n";
