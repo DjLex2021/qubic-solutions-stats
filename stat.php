@@ -60,15 +60,16 @@ function sendTelegramMessage($message, $telegramBotToken = "", $chatID = "") {
 
     if($chatID != "") {
         $data = [
-            'chat_id' => $chatID,
-            'text' => $message
+            "chat_id" => $chatID,
+            "text" => $message,
+            "parse_mode" => "HTML"
         ];
 
         $options = [
-            'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/x-www-form-urlencoded\r\n',
-                'content' => http_build_query($data)
+            "http" => [
+                "method" => "POST",
+                "header" => "Content-Type: application/x-www-form-urlencoded\r\n",
+                "content" => http_build_query($data)
             ]
         ];
 
