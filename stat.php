@@ -8,7 +8,7 @@
 $walletId = "";
 
 // TelegramBot
-$sendTelegramMessage = true;
+$sendTelegramMessage = false;
 $telegramUserName = "";
 $telegramBotToken = "";
 
@@ -226,20 +226,21 @@ if($_GET["show"] == 1) {
                 </div>
                 <div class="list-group-item" style="cursor: unset;">
                     Solutions
-                    <span class="pull-right text-muted small"><em>'.$stat["solutions"].'</em>
+                    <span class="pull-right text-muted small"><em>'.$stat["solutions"].' ( '.number_format($stat["solutions"] / count($stat["epochHistory"][ $stat["epoch"] ]), 2, ",", "").' &Oslash; )</em>
                     </span>
                 </div>
             </div>';
 
-        $o .= '<div class="table-responsive" style="width: 360px; margin-left: 12px;">
+        $o .= '<div class="table-responsive" style="width: 460px; margin-left: 12px;">
                 <table class="table table-striped table-bordered table-hover" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th style="text-align: center;">#</th>
                             <th>Name</th>
-                            <th>Iterrate</th>
-                            <th>Sols</th>
-                            <th>Last Seen</th>
+                            <th style="text-align: center;">Iterrate</th>
+                            <th style="text-align: center;">Sols</th>
+                            <th style="text-align: center;">&Oslash;</th>
+                            <th style="text-align: center;">Last Seen</th>
                         </tr>
                     </thead>
                     <tbody>';
@@ -254,13 +255,14 @@ if($_GET["show"] == 1) {
                       <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>
                       <path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>
                     </svg>
-                </a> ".$devId : $devId;
+                </a><br />".$devId : $devId;
 
             $o .= '     <tr style="background-color: '.$rowColor.';">
                             <td style="text-align: right;">'.$i.'</td>
                             <td style="white-space: normal;">'.$devId.'</td>
                             <td style="text-align: right;">'.number_format($dev["iterrate"], 2, ",", "").'</td>
                             <td style="text-align: right;">'.$dev["solutions_current"].'</td>
+                            <td style="text-align: right;">'.number_format($dev["solutions_current"] / count($stat["epochHistory"][ $stat["epoch"] ]), 2, ",", "").'</td>
                             <td style="text-align: center; white-space: normal;">'.$dev["last_seen"].'</td>
                         </tr>';
 
@@ -318,13 +320,14 @@ if($_GET["show"] == 1) {
         </div>';
 
         $o .= '<h4 style="margin-left: 20px;">History</h4>
-                <div class="table-responsive" style="width: 600px; margin-left: 12px;">
+                <div class="table-responsive" style="width: 620px; margin-left: 12px;">
                 <table class="table table-striped table-bordered table-hover">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Epoche</th>
-                            <th>Sols</th>
+                            <th style="text-align: center;">Date</th>
+                            <th style="text-align: center;">Epoche</th>
+                            <th style="text-align: center;">Sols</th>
+                            <th style="text-align: center;">&Oslash;</th>
                             <th style="text-align: center;">Day<br />1<br />Wed</th>
                             <th style="text-align: center;">Day<br />2<br />Thu</th>
                             <th style="text-align: center;">Day<br />3<br />Fri</th>
@@ -352,6 +355,7 @@ if($_GET["show"] == 1) {
                             <td style="text-align: center;">'.$hData["date"].'</td>
                             <td style="text-align: center;">'.$epoch.'</td>
                             <td style="text-align: right;">'.$hData["solutions"].'</td>
+                            <td style="text-align: right;">'.number_format($hData["solutions"] / count($stat["epochHistory"][ $stat["epoch"] ]), 2, ",", "").'</td>
                             <td style="text-align: center;">'.reset($day1).'</td>
                             <td style="text-align: center;">'.reset($day2).'</td>
                             <td style="text-align: center;">'.reset($day3).'</td>
@@ -376,7 +380,7 @@ if($_GET["show"] == 1) {
                             <tr>
                                 <th>EP '.$epoch.'</th>
                                 <th>Name</th>
-                                <th>Sols</th>
+                                <th style="text-align: center;">Sols</th>
                             </tr>
                         </thead>
                         <tbody>';
